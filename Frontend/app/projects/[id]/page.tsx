@@ -7,6 +7,8 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
+import { MetricsSummary } from "@/components/MetricsSummary";
+import { calculateMetrics } from "@/lib/calculateMetrics";
 
 // Updated type to match Flask backend response
 interface AnalysisResult {
@@ -24,19 +26,46 @@ interface AnalysisResult {
         negative_percent: number;
       };
     };
+    metrics_section: {
+      user_satisfaction: {
+        percentage: number;
+        description: string;
+      };
+      efficiency_improvement: {
+        multiplier: number;
+        description: string;
+      };
+      time_saved: {
+        hours_per_week: number;
+        description: string;
+      };
+      revenue_impact: {
+        percentage: number;
+        description: string;
+      };
+    };
   };
   original_feedback: Record<string, string>[];
 }
 
 export default function ProjectPage({ params }: { params: { id: string } }) {
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
+  const [calculatedMetrics, setCalculatedMetrics] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const storedAnalysis = localStorage.getItem("projectAnalysis");
     if (storedAnalysis) {
       try {
-        setAnalysis(JSON.parse(storedAnalysis));
+        const parsedAnalysis = JSON.parse(storedAnalysis);
+        setAnalysis(parsedAnalysis);
+
+        // Calculate metrics from the feedback data
+        const feedbackData = JSON.parse(
+          localStorage.getItem("feedbackData") || "[]"
+        );
+        const metrics = calculateMetrics(feedbackData);
+        setCalculatedMetrics(metrics);
       } catch (e) {
         setError("Failed to load analysis results");
         console.error("Error parsing analysis:", e);
@@ -70,7 +99,7 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
     );
   }
 
-  if (!analysis) {
+  if (!analysis || !calculatedMetrics) {
     return (
       <div className="flex min-h-screen flex-col">
         <header className="sticky top-0 z-10 border-b bg-background">
@@ -107,83 +136,93 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
         </div>
       </header>
       <main className="flex-1 bg-background">
-        <div className="container py-8">
-          <h1 className="mb-8 text-3xl font-bold tracking-tight">
+        <div className="container max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+          <h1 className="text-3xl font-bold tracking-tight mb-8">
             Analysis Results
           </h1>
 
-          <Tabs defaultValue="summary" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="summary">Summary</TabsTrigger>
+          {/* Summary and Sentiment Analysis Cards */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <Card>
+              <CardContent className="pt-6">
+                <h2 className="text-xl font-semibold mb-4">Summary</h2>
+                <p className="text-gray-700 whitespace-pre-wrap mb-4">
+                  {summary_section.key_changes_narrative}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="pt-6">
+                <h2 className="text-xl font-semibold mb-4">
+                  Sentiment Analysis
+                </h2>
+                <p className="text-gray-700 whitespace-pre-wrap mb-4">
+                  {feedback_analysis_section.sentiment_summary}
+                </p>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="p-4 bg-green-100 rounded-lg">
+                    <p className="text-center text-green-800">
+                      <span className="block text-2xl font-bold">
+                        {
+                          feedback_analysis_section.sentiment_scores
+                            .positive_percent
+                        }
+                        %
+                      </span>
+                      <span className="text-sm">Positive</span>
+                    </p>
+                  </div>
+                  <div className="p-4 bg-gray-100 rounded-lg">
+                    <p className="text-center text-gray-800">
+                      <span className="block text-2xl font-bold">
+                        {
+                          feedback_analysis_section.sentiment_scores
+                            .neutral_percent
+                        }
+                        %
+                      </span>
+                      <span className="text-sm">Neutral</span>
+                    </p>
+                  </div>
+                  <div className="p-4 bg-red-100 rounded-lg">
+                    <p className="text-center text-red-800">
+                      <span className="block text-2xl font-bold">
+                        {
+                          feedback_analysis_section.sentiment_scores
+                            .negative_percent
+                        }
+                        %
+                      </span>
+                      <span className="text-sm">Negative</span>
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Metrics Summary */}
+          <div className="mb-8">
+            <MetricsSummary
+              metrics={calculatedMetrics.metrics_section}
+              sentimentScores={calculatedMetrics.sentiment_scores}
+            />
+          </div>
+
+          {/* Tabs Section */}
+          <Tabs defaultValue="changes" className="space-y-4">
+            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="changes">Changes</TabsTrigger>
               <TabsTrigger value="feedback">Feedback</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="summary">
-              <Card>
-                <CardContent className="pt-6 space-y-4">
-                  <div>
-                    <h2 className="text-xl font-semibold mb-2">Key Changes</h2>
-                    <p className="whitespace-pre-wrap">
-                      {summary_section.key_changes_narrative}
-                    </p>
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-semibold mb-2">
-                      Sentiment Analysis
-                    </h2>
-                    <p className="whitespace-pre-wrap">
-                      {feedback_analysis_section.sentiment_summary}
-                    </p>
-                    <div className="mt-4 flex gap-4">
-                      <div className="flex-1 p-4 bg-green-100 rounded-lg">
-                        <p className="text-center text-green-800">
-                          <span className="block text-2xl font-bold">
-                            {
-                              feedback_analysis_section.sentiment_scores
-                                .positive_percent
-                            }
-                            %
-                          </span>
-                          <span className="text-sm">Positive</span>
-                        </p>
-                      </div>
-                      <div className="flex-1 p-4 bg-gray-100 rounded-lg">
-                        <p className="text-center text-gray-800">
-                          <span className="block text-2xl font-bold">
-                            {
-                              feedback_analysis_section.sentiment_scores
-                                .neutral_percent
-                            }
-                            %
-                          </span>
-                          <span className="text-sm">Neutral</span>
-                        </p>
-                      </div>
-                      <div className="flex-1 p-4 bg-red-100 rounded-lg">
-                        <p className="text-center text-red-800">
-                          <span className="block text-2xl font-bold">
-                            {
-                              feedback_analysis_section.sentiment_scores
-                                .negative_percent
-                            }
-                            %
-                          </span>
-                          <span className="text-sm">Negative</span>
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
             <TabsContent value="changes">
               <Card>
                 <CardContent className="pt-6">
-                  <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <h2 className="text-xl font-semibold mb-2">
+                      <h2 className="text-xl font-semibold mb-4">
                         Addressed Issues
                       </h2>
                       <ul className="list-disc pl-6 space-y-2">
@@ -197,7 +236,7 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
                       </ul>
                     </div>
                     <div>
-                      <h2 className="text-xl font-semibold mb-2">
+                      <h2 className="text-xl font-semibold mb-4">
                         Outstanding Issues
                       </h2>
                       <ul className="list-disc pl-6 space-y-2">
@@ -218,7 +257,7 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
             <TabsContent value="feedback">
               <Card>
                 <CardContent className="pt-6">
-                  <div className="space-y-4">
+                  <div className="grid gap-4">
                     {analysis.original_feedback.map((feedback, index) => (
                       <div key={index} className="p-4 border rounded-lg">
                         <p className="font-semibold">

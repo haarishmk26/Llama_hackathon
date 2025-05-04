@@ -121,12 +121,31 @@ def analyze_changes():
         '    "outstanding_issues": ["Bullet point string describing potential issues still present in the \'after\' UI or feedback points not addressed."]'
         "  },"
         '  "feedback_analysis_section": {'
-        '    "sentiment_summary": "A brief text summarizing the overall sentiment (positive, negative, neutral) and key themes found ONLY in the provided user feedback.",'
+        '    "sentiment_summary": "A brief paragraph summarizing the overall sentiment of user feedback and key themes.",'
         '    "sentiment_scores": {'
-        '      "positive_percent": /* integer percentage, e.g., 20 */,'
-        '      "neutral_percent":  /* integer percentage, e.g., 20 */,'
-        '      "negative_percent": /* integer percentage, e.g., 60 */'
+        '      "positive_percent": 60,'
+        '      "neutral_percent": 20,'
+        '      "negative_percent": 20'
         "    }"
+        "  },"
+        '  "metrics_section": {'
+        '    "user_satisfaction": {'
+        '      "percentage": 30,'
+        '      "description": "Increase in user satisfaction based on feedback analysis"'
+        "    },"
+        '    "efficiency_improvement": {'
+        '      "multiplier": 2.5,'
+        '      "description": "Improvement in task completion efficiency"'
+        "    },"
+        '    "time_saved": {'
+        '      "hours_per_week": 1,'
+        '      "description": "Average time saved per user per week"'
+        "    },"
+        '    "revenue_impact": {'
+        '      "percentage": 15,'
+        '      "description": "Estimated increase in revenue from improved engagement"'
+        "    }"
+        "  }"
         "}"
     )
     app.logger.info("Constructed prompt for Llama API.")
