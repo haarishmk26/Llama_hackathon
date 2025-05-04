@@ -17,11 +17,21 @@ import {
   AccordionContent,
 } from "@/components/ui/accordion";
 
+// Constants
+const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB (slightly less than Flask's 16MB limit)
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
 // Types for our form data
 interface FormState {
   oldUIImages: File[];
   newUIImages: File[];
   csvFile: File | null;
+}
+
+// Types for validation errors
+interface ValidationError {
+  field: string;
+  message: string;
 }
 
 // Types for our API response
@@ -54,14 +64,99 @@ export default function NewProject() {
   // UI state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [validationErrors, setValidationErrors] = useState<ValidationError[]>(
+    []
+  );
+
+  // Validation functions
+  const validateFile = (file: File, type: "image" | "csv"): string | null => {
+    if (file.size > MAX_FILE_SIZE) {
+      return `File size exceeds ${(MAX_FILE_SIZE / (1024 * 1024)).toFixed(
+        1
+      )}MB limit`;
+    }
+
+    if (type === "image" && !ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      return "Invalid image type. Please use JPEG, PNG, or WebP";
+    }
+
+    if (type === "csv" && file.type !== "text/csv") {
+      return "Invalid file type. Please upload a CSV file";
+    }
+
+    return null;
+  };
+
+  const validateForm = (): boolean => {
+    const errors: ValidationError[] = [];
+
+    if (formState.oldUIImages.length === 0) {
+      errors.push({
+        field: "oldUI",
+        message: "Please upload the old UI image",
+      });
+    } else {
+      const error = validateFile(formState.oldUIImages[0], "image");
+      if (error) errors.push({ field: "oldUI", message: error });
+    }
+
+    if (formState.newUIImages.length === 0) {
+      errors.push({
+        field: "newUI",
+        message: "Please upload the new UI image",
+      });
+    } else {
+      const error = validateFile(formState.newUIImages[0], "image");
+      if (error) errors.push({ field: "newUI", message: error });
+    }
+
+    if (!formState.csvFile) {
+      errors.push({
+        field: "csv",
+        message: "Please upload the feedback CSV file",
+      });
+    } else {
+      const error = validateFile(formState.csvFile, "csv");
+      if (error) errors.push({ field: "csv", message: error });
+    }
+
+    setValidationErrors(errors);
+    return errors.length === 0;
+  };
+
+  const handleFileChange = (files: File[], type: "oldUI" | "newUI" | "csv") => {
+    const file = files[0];
+    if (!file) return;
+
+    const error = validateFile(file, type === "csv" ? "csv" : "image");
+    if (error) {
+      setValidationErrors((prev) => [...prev, { field: type, message: error }]);
+      return;
+    }
+
+    setValidationErrors((prev) => prev.filter((e) => e.field !== type));
+
+    switch (type) {
+      case "oldUI":
+        setFormState((prev) => ({ ...prev, oldUIImages: files }));
+        break;
+      case "newUI":
+        setFormState((prev) => ({ ...prev, newUIImages: files }));
+        break;
+      case "csv":
+        setFormState((prev) => ({ ...prev, csvFile: file }));
+        break;
+    }
+  };
 
   const isFormValid =
     formState.oldUIImages.length > 0 &&
     formState.newUIImages.length > 0 &&
-    formState.csvFile !== null;
+    formState.csvFile !== null &&
+    validationErrors.length === 0;
 
   const handleSubmit = async () => {
-    if (!isFormValid) return;
+    if (!validateForm()) return;
 
     setIsSubmitting(true);
     setSubmitError(null);
@@ -101,7 +196,6 @@ export default function NewProject() {
       const jsonData = lines.slice(1).map((line) => {
         const values = line.split(",").map((value) => value.trim());
         return headers.reduce((obj, header, index) => {
-          // Ensure we have a valid value
           obj[header] = values[index] || "";
           return obj;
         }, {} as Record<string, string>);
@@ -171,15 +265,21 @@ export default function NewProject() {
                   <AccordionContent forceMount>
                     <ImageUpload
                       label="Upload Old UI Screenshot"
-                      description="Add screenshot of your old UI design"
+                      description={`Add screenshot of your old UI design (Max ${(
+                        MAX_FILE_SIZE /
+                        (1024 * 1024)
+                      ).toFixed(1)}MB)`}
                       files={formState.oldUIImages}
-                      setFiles={(files) =>
-                        setFormState((prev) => ({
-                          ...prev,
-                          oldUIImages: files,
-                        }))
-                      }
+                      setFiles={(files) => handleFileChange(files, "oldUI")}
                     />
+                    {validationErrors.find((e) => e.field === "oldUI") && (
+                      <p className="mt-2 text-sm text-red-500">
+                        {
+                          validationErrors.find((e) => e.field === "oldUI")
+                            ?.message
+                        }
+                      </p>
+                    )}
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="new-ui">
@@ -187,15 +287,21 @@ export default function NewProject() {
                   <AccordionContent forceMount>
                     <ImageUpload
                       label="Upload New UI Screenshot"
-                      description="Add screenshot of your new UI design"
+                      description={`Add screenshot of your new UI design (Max ${(
+                        MAX_FILE_SIZE /
+                        (1024 * 1024)
+                      ).toFixed(1)}MB)`}
                       files={formState.newUIImages}
-                      setFiles={(files) =>
-                        setFormState((prev) => ({
-                          ...prev,
-                          newUIImages: files,
-                        }))
-                      }
+                      setFiles={(files) => handleFileChange(files, "newUI")}
                     />
+                    {validationErrors.find((e) => e.field === "newUI") && (
+                      <p className="mt-2 text-sm text-red-500">
+                        {
+                          validationErrors.find((e) => e.field === "newUI")
+                            ?.message
+                        }
+                      </p>
+                    )}
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="csv">
@@ -206,8 +312,10 @@ export default function NewProject() {
                         type="file"
                         accept=".csv"
                         onChange={(e) => {
-                          const file = e.target.files?.[0] || null;
-                          setFormState((prev) => ({ ...prev, csvFile: file }));
+                          const files = e.target.files
+                            ? Array.from(e.target.files)
+                            : [];
+                          handleFileChange(files, "csv");
                         }}
                       />
                       {formState.csvFile ? (
@@ -216,8 +324,17 @@ export default function NewProject() {
                         </span>
                       ) : (
                         <span className="mt-2 text-xs text-muted-foreground">
-                          Drop or select a CSV file
+                          Drop or select a CSV file (Max{" "}
+                          {(MAX_FILE_SIZE / (1024 * 1024)).toFixed(1)}MB)
                         </span>
+                      )}
+                      {validationErrors.find((e) => e.field === "csv") && (
+                        <p className="mt-2 text-sm text-red-500">
+                          {
+                            validationErrors.find((e) => e.field === "csv")
+                              ?.message
+                          }
+                        </p>
                       )}
                     </div>
                   </AccordionContent>
