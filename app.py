@@ -4,9 +4,14 @@ import os
 import json  # Make sure json is imported
 import base64
 import requests
+from flask_cors import CORS
 
 load_dotenv()
 app = Flask(__name__)
+CORS(app, origins=["http://localhost:3000", "http://127.0.0.1:3000"])
+
+# Configure maximum file size (16MB)
+app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # 16MB in bytes
 
 
 @app.route("/", methods=["GET"])
@@ -181,45 +186,40 @@ def analyze_changes():
             f"Received successful response from Llama API (Status: {response.status_code})."
         )
 
+        print("=== RAW LLAMA RESPONSE TEXT ===")
+        print(response.text)
+        print("================================")
+
         # === Start: Step 6 - Handle Llama API Response ===
 
         analysis_result_structured = None
         try:
-            # Attempt 1: Parse directly if response is JSON
-            analysis_result_raw = response.json()
+            # 1. Parse the OpenAI-style response
+            llama_response = response.json()
             app.logger.info("Successfully parsed Llama response as JSON.")
-            analysis_result_structured = analysis_result_raw
-        except json.JSONDecodeError:
-            app.logger.warning(
-                f"Llama API response was not valid JSON. Trying to extract from text. Response text (first 500 chars): {response.text[:500]}"
-            )
-            # Attempt 2: Extract JSON if wrapped in text
-            try:
-                start = response.text.find("{")
-                end = response.text.rfind("}") + 1
-                if start != -1 and end != 0:
-                    json_str = response.text[start:end]
-                    analysis_result_structured = json.loads(json_str)
-                    app.logger.info(
-                        "Successfully extracted and parsed JSON from Llama response text."
-                    )
-                else:
-                    raise json.JSONDecodeError(
-                        "No JSON object boundaries found in text", response.text, 0
-                    )
-            except json.JSONDecodeError as json_extract_error:
-                app.logger.error(
-                    f"Failed to parse or extract JSON from Llama response: {json_extract_error}"
-                )
-                return jsonify(
-                    {"error": "Analysis service returned invalid data format."}
-                ), 502
-
-        # --- Add this line for debugging ---
-        app.logger.info(
-            f"Raw analysis structure received: {json.dumps(analysis_result_structured, indent=2)}"
-        )
-        # --- End of added line ---
+            # Extract the content string from the first choice
+            content_str = llama_response["choices"][0]["message"]["content"]
+            print("=== RAW LLAMA CONTENT STRING ===")
+            print(content_str)
+            print("=================================")
+            # Remove triple backticks and optional 'json' label
+            content_str = content_str.strip()
+            if content_str.startswith("```json"):
+                content_str = content_str[len("```json") :].strip()
+            if content_str.startswith("```"):
+                content_str = content_str[len("```") :].strip()
+            if content_str.endswith("```"):
+                content_str = content_str[:-3].strip()
+            # Now parse the cleaned string as JSON
+            analysis_result_structured = json.loads(content_str)
+            print("=== PARSED ANALYSIS STRUCTURED ===")
+            print(analysis_result_structured)
+            print("==================================")
+        except Exception as e:
+            app.logger.error(f"Failed to extract/parse JSON from Llama response: {e}")
+            return jsonify(
+                {"error": "Analysis service returned invalid data format."}
+            ), 502
 
         # Validate the structure of the parsed/extracted JSON
         if (
@@ -296,7 +296,11 @@ def analyze_changes():
 # Runner (add if not present)
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5001))
-    # Enable Flask's built-in logger for development
+    # Basic logging configuration for development
     if os.getenv("FLASK_ENV") == "development":
-        app.logger.setLevel("INFO")
-    app.run(debug=(os.getenv("FLASK_ENV") == "development"), port=port)
+        import logging
+
+        # Ensure logging is configured to show INFO level messages
+        logging.basicConfig(level=logging.INFO)
+        app.logger.setLevel(logging.INFO)  # Use logging.INFO here
+    app.run(debug=(os.getenv("FLASK_ENV") == "development"), host="0.0.0.0", port=port)

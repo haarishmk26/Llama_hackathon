@@ -9,20 +9,20 @@ export default function Home() {
   return (
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-10 border-b bg-background">
-        <div className="container flex h-16 items-center justify-between py-4">
-          <div className="flex items-center gap-2">
+        <div className="container flex h-20 items-center justify-between py-6 px-2">
+          <div className="flex items-center gap-3">
             <Image
               src="/images/logo.png"
               alt="Artifact Logo"
               width={32}
               height={32}
-              className="h-8 w-8"
+              className="h-9 w-9"
             />
-            <span className="text-xl font-semibold">Artifact</span>
+            <span className="text-2xl font-bold tracking-tight">Artifact</span>
           </div>
           <Link href="/projects/new">
-            <Button>
-              <PlusCircle className="mr-2 h-4 w-4" />
+            <Button className="flex items-center gap-2 px-5 py-2 text-base font-medium">
+              <PlusCircle className="mr-2 h-5 w-5" />
               New Project
             </Button>
           </Link>

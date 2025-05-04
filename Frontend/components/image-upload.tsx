@@ -73,26 +73,34 @@ export default function ImageUpload({
       </div>
 
       {files.length > 0 && (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-          {previews.map((preview, index) => (
-            <div key={index} className="relative rounded-md border">
-              <div className="relative aspect-square overflow-hidden rounded-md">
-                <Image
-                  src={preview || "/placeholder.svg"}
-                  alt={`Screenshot ${index + 1}`}
-                  fill
-                  className="object-cover"
-                />
-              </div>
-              <button
-                onClick={() => removeFile(index)}
-                className="absolute -left-2 -top-2 rounded-full bg-background p-1 shadow-md hover:bg-muted"
+        <div className="flex justify-center items-center w-full">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 max-w-xl w-full place-items-center">
+            {previews.map((preview, index) => (
+              <div
+                key={index}
+                className="relative rounded-lg border bg-white shadow-md flex flex-col items-center p-2"
               >
-                <X className="h-4 w-4" />
-              </button>
-              <div className="p-2 text-xs truncate">{files[index].name}</div>
-            </div>
-          ))}
+                <div className="relative w-48 h-48 sm:w-56 sm:h-56 md:w-60 md:h-60 aspect-square overflow-hidden rounded-lg">
+                  <Image
+                    src={preview || "/placeholder.svg"}
+                    alt={`Screenshot ${index + 1}`}
+                    fill
+                    className="object-contain"
+                  />
+                </div>
+                <button
+                  onClick={() => removeFile(index)}
+                  className="absolute -left-3 -top-3 rounded-full bg-background p-1 shadow-md hover:bg-muted border border-gray-200"
+                  style={{ zIndex: 2 }}
+                >
+                  <X className="h-5 w-5" />
+                </button>
+                <div className="p-2 text-xs truncate w-40 text-center">
+                  {files[index].name}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
