@@ -22,11 +22,24 @@ export function SummarySection() {
 
 // Sentiment Analysis Section
 export function SentimentAnalysisSection({
-  scores,
+  sentiment,
 }: {
-  scores: SentimentScores;
+  sentiment: {
+    sentiment_summary: string;
+    sentiment_scores: SentimentScores;
+    key_positive_aspects?: string[];
+    key_concerns?: string[];
+    improvement_suggestions?: string[];
+  };
 }) {
-  const { positive_percent, neutral_percent, negative_percent } = scores;
+  const {
+    sentiment_scores,
+    key_positive_aspects,
+    key_concerns,
+    improvement_suggestions,
+  } = sentiment;
+  const { positive_percent, neutral_percent, negative_percent } =
+    sentiment_scores;
 
   return (
     <div className="mb-6">
@@ -35,12 +48,12 @@ export function SentimentAnalysisSection({
       <div className="flex flex-col space-y-6">
         <div>
           <p className="mb-4">
-            The provided user feedback suggests a generally positive reception
-            of the new UI changes.
+            {sentiment.sentiment_summary ||
+              "The provided user feedback suggests a generally positive reception of the new UI changes."}
           </p>
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-4 mb-6">
           <div className="bg-green-100 p-4 rounded-lg text-center">
             <div className="text-3xl font-bold text-green-700">
               {positive_percent}%
@@ -61,6 +74,53 @@ export function SentimentAnalysisSection({
             </div>
             <div className="text-sm text-red-700">Negative</div>
           </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {key_positive_aspects && key_positive_aspects.length > 0 && (
+            <div className="bg-green-50 p-4 rounded-lg">
+              <h3 className="text-green-800 font-semibold mb-2">
+                Key Positive Aspects
+              </h3>
+              <ul className="list-disc pl-5 space-y-1 text-sm">
+                {key_positive_aspects.map((aspect, index) => (
+                  <li key={index} className="text-green-700">
+                    {aspect}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {key_concerns && key_concerns.length > 0 && (
+            <div className="bg-amber-50 p-4 rounded-lg">
+              <h3 className="text-amber-800 font-semibold mb-2">
+                Key Concerns
+              </h3>
+              <ul className="list-disc pl-5 space-y-1 text-sm">
+                {key_concerns.map((concern, index) => (
+                  <li key={index} className="text-amber-700">
+                    {concern}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {improvement_suggestions && improvement_suggestions.length > 0 && (
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <h3 className="text-blue-800 font-semibold mb-2">
+                Improvement Suggestions
+              </h3>
+              <ul className="list-disc pl-5 space-y-1 text-sm">
+                {improvement_suggestions.map((suggestion, index) => (
+                  <li key={index} className="text-blue-700">
+                    {suggestion}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -225,19 +285,29 @@ export function DetailedMetricsSection({ metrics }: { metrics: Metrics }) {
             <div>
               <p className="text-sm font-medium">CSAT Score</p>
               <p className="text-xl font-bold">
-                +{metrics.user_satisfaction.percentage}%
+                +{metrics.user_satisfaction.percentage.toFixed(1)}%
               </p>
             </div>
             <div>
               <p className="text-sm font-medium">NPS Rating</p>
               <p className="text-xl font-bold">
-                +{Math.round(metrics.user_satisfaction.percentage * 0.8)}%
+                +
+                {metrics.user_satisfaction.nps_improvement
+                  ? metrics.user_satisfaction.nps_improvement.toFixed(1)
+                  : (metrics.user_satisfaction.percentage * 0.8).toFixed(1)}
+                %
               </p>
             </div>
             <div>
               <p className="text-sm font-medium">Support Tickets</p>
               <p className="text-xl font-bold">
-                -{Math.round(metrics.efficiency_improvement.multiplier * 15)}%
+                -
+                {metrics.user_satisfaction.support_tickets_reduction
+                  ? metrics.user_satisfaction.support_tickets_reduction.toFixed(
+                      1
+                    )
+                  : (metrics.efficiency_improvement.multiplier * 15).toFixed(1)}
+                %
               </p>
             </div>
           </div>
@@ -252,9 +322,13 @@ export function DetailedMetricsSection({ metrics }: { metrics: Metrics }) {
               <p className="text-sm font-medium">Task Time</p>
               <p className="text-xl font-bold">
                 -
-                {Math.round(
-                  (1 - 1 / metrics.efficiency_improvement.multiplier) * 100
-                )}
+                {metrics.efficiency_improvement.task_time_reduction
+                  ? metrics.efficiency_improvement.task_time_reduction.toFixed(
+                      1
+                    )
+                  : Math.round(
+                      (1 - 1 / metrics.efficiency_improvement.multiplier) * 100
+                    )}
                 %
               </p>
             </div>
@@ -262,16 +336,24 @@ export function DetailedMetricsSection({ metrics }: { metrics: Metrics }) {
               <p className="text-sm font-medium">Clicks Per Task</p>
               <p className="text-xl font-bold">
                 -
-                {Math.round(
-                  (1 - 1 / metrics.efficiency_improvement.multiplier) * 90
-                )}
+                {metrics.efficiency_improvement.clicks_reduction
+                  ? metrics.efficiency_improvement.clicks_reduction.toFixed(1)
+                  : Math.round(
+                      (1 - 1 / metrics.efficiency_improvement.multiplier) * 90
+                    )}
                 %
               </p>
             </div>
             <div>
               <p className="text-sm font-medium">Error Rate</p>
               <p className="text-xl font-bold">
-                -{Math.round(metrics.efficiency_improvement.multiplier * 20)}%
+                -
+                {metrics.efficiency_improvement.error_rate_reduction
+                  ? metrics.efficiency_improvement.error_rate_reduction.toFixed(
+                      1
+                    )
+                  : Math.round(metrics.efficiency_improvement.multiplier * 20)}
+                %
               </p>
             </div>
           </div>
@@ -283,13 +365,16 @@ export function DetailedMetricsSection({ metrics }: { metrics: Metrics }) {
             <div>
               <p className="text-sm font-medium">Weekly Hours</p>
               <p className="text-xl font-bold">
-                {metrics.time_saved.hours_per_week} hrs/user
+                {metrics.time_saved.hours_per_week.toFixed(1)} hrs/user
               </p>
             </div>
             <div>
               <p className="text-sm font-medium">Annual Savings</p>
               <p className="text-xl font-bold">
-                {Math.round(metrics.time_saved.hours_per_week * 52)} hrs/user
+                {metrics.time_saved.annual_hours
+                  ? metrics.time_saved.annual_hours.toFixed(0)
+                  : Math.round(metrics.time_saved.hours_per_week * 52)}{" "}
+                hrs/user
               </p>
             </div>
           </div>
@@ -303,25 +388,37 @@ export function DetailedMetricsSection({ metrics }: { metrics: Metrics }) {
             <div>
               <p className="text-sm font-medium">Revenue Per User</p>
               <p className="text-xl font-bold">
-                +{metrics.revenue_impact.percentage}%
+                +{metrics.revenue_impact.percentage.toFixed(1)}%
               </p>
             </div>
             <div>
               <p className="text-sm font-medium">Conversion Rate</p>
               <p className="text-xl font-bold">
-                +{Math.round(metrics.revenue_impact.percentage * 0.7)}%
+                +
+                {metrics.revenue_impact.conversion_improvement
+                  ? metrics.revenue_impact.conversion_improvement.toFixed(1)
+                  : Math.round(metrics.revenue_impact.percentage * 0.7)}
+                %
               </p>
             </div>
             <div>
               <p className="text-sm font-medium">Churn Rate</p>
               <p className="text-xl font-bold">
-                -{Math.round(metrics.user_satisfaction.percentage * 0.5)}%
+                -
+                {metrics.revenue_impact.churn_reduction
+                  ? metrics.revenue_impact.churn_reduction.toFixed(1)
+                  : Math.round(metrics.user_satisfaction.percentage * 0.5)}
+                %
               </p>
             </div>
             <div>
               <p className="text-sm font-medium">Support Cost</p>
               <p className="text-xl font-bold">
-                -{Math.round(metrics.efficiency_improvement.multiplier * 25)}%
+                -
+                {metrics.revenue_impact.support_cost_reduction
+                  ? metrics.revenue_impact.support_cost_reduction.toFixed(1)
+                  : Math.round(metrics.efficiency_improvement.multiplier * 25)}
+                %
               </p>
             </div>
           </div>
@@ -339,13 +436,16 @@ export function AnalysisDisplay({
   sentiment: {
     sentiment_summary: string;
     sentiment_scores: SentimentScores;
+    key_positive_aspects?: string[];
+    key_concerns?: string[];
+    improvement_suggestions?: string[];
   };
   metrics: Metrics;
 }) {
   return (
     <div className="space-y-8">
       <SummarySection />
-      <SentimentAnalysisSection scores={sentiment.sentiment_scores} />
+      <SentimentAnalysisSection sentiment={sentiment} />
       <UserImpactSection metrics={metrics} />
       <DetailedMetricsSection metrics={metrics} />
       <BusinessValueSection metrics={metrics} />

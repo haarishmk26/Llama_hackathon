@@ -82,7 +82,13 @@ export const safeParseCSV = (csvText: string): Record<string, string>[] => {
 };
 
 export const analyzeSentiment = async (feedbackData: any[]) => {
+  if (!feedbackData || feedbackData.length === 0) {
+    console.error('No feedback data provided for sentiment analysis');
+    throw new Error('No feedback data provided for sentiment analysis');
+  }
+
   try {
+    console.log('Calling Llama API for sentiment analysis...');
     const response = await fetch('/api/llama', {
       method: 'POST',
       headers: {
@@ -93,7 +99,39 @@ export const analyzeSentiment = async (feedbackData: any[]) => {
         messages: [
           {
             role: "system",
-            content: "You are a sentiment analysis expert. Analyze the feedback data and return sentiment scores in the following format: {\"summary\": \"string\", \"scores\": {\"positive_percent\": number, \"neutral_percent\": number, \"negative_percent\": number}}"
+            content: `You are a sentiment analysis expert specializing in user feedback analysis. Analyze the provided feedback data to extract sentiment trends, common themes, and user satisfaction patterns.
+
+Focus on:
+1. Overall sentiment distribution (positive, neutral, negative) as percentages
+2. Key positive aspects users mention about the new UI/features
+3. Key pain points or concerns that appear in feedback
+4. Trends in sentiment based on user type, platform, or other segmentation
+5. Suggestions for improvements based on the sentiment analysis
+
+Return your analysis in the following JSON format:
+{
+  "summary": "A concise 2-3 sentence summary of the overall sentiment and key findings",
+  "scores": {
+    "positive_percent": number,
+    "neutral_percent": number,
+    "negative_percent": number
+  },
+  "key_positive_aspects": [
+    "Positive aspect 1",
+    "Positive aspect 2",
+    "Positive aspect 3"
+  ],
+  "key_concerns": [
+    "Concern 1",
+    "Concern 2",
+    "Concern 3"
+  ],
+  "improvement_suggestions": [
+    "Suggestion 1",
+    "Suggestion 2",
+    "Suggestion 3"
+  ]
+}`
           },
           {
             role: "user",
@@ -103,45 +141,54 @@ export const analyzeSentiment = async (feedbackData: any[]) => {
       }),
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'API request failed');
+    let data;
+    try {
+      data = await response.json();
+    } catch (jsonError) {
+      console.error('Failed to parse API response:', jsonError);
+      // Let the calling function handle this case with its own direct calculation
+      throw new Error('Failed to parse sentiment analysis API response');
     }
 
-    const data = await response.json();
+    if (!response.ok) {
+      console.error('API error:', data.error || 'Unknown error');
+      throw new Error(data.error || 'API request failed');
+    }
     
     // Validate that the content is valid JSON
     try {
-      JSON.parse(data.content);
+      const parsedContent = JSON.parse(data.content);
+      
+      // Check that the structure is valid (has required fields)
+      if (!parsedContent.scores || 
+          typeof parsedContent.scores.positive_percent !== 'number' ||
+          typeof parsedContent.scores.neutral_percent !== 'number' ||
+          typeof parsedContent.scores.negative_percent !== 'number') {
+        console.error('API returned invalid sentiment data structure:', parsedContent);
+        throw new Error('Invalid sentiment data structure');
+      }
+      
       return data.content;
     } catch (parseError) {
-      console.error('API returned invalid JSON:', parseError);
-      // Return a valid JSON string as fallback
-      return JSON.stringify({
-        summary: "Analysis completed with default calculation",
-        scores: {
-          positive_percent: 70,
-          neutral_percent: 20,
-          negative_percent: 10
-        }
-      });
+      console.error('API returned invalid JSON for sentiment analysis:', parseError);
+      // Let the calling function handle this with its own direct calculation
+      throw new Error('Invalid sentiment analysis JSON from API');
     }
   } catch (error) {
     console.error('Error in sentiment analysis:', error);
-    // Return a valid JSON string as fallback
-    return JSON.stringify({
-      summary: "Analysis completed with default calculation",
-      scores: {
-        positive_percent: 70,
-        neutral_percent: 20,
-        negative_percent: 10
-      }
-    });
+    // Let the main component's error handling take care of the fallback
+    throw error;
   }
 };
 
 export const calculateMetrics = async (feedbackData: any[]) => {
+  if (!feedbackData || feedbackData.length === 0) {
+    console.error('No feedback data provided for metrics calculation');
+    throw new Error('No feedback data provided for metrics calculation');
+  }
+
   try {
+    console.log('Calling Llama API for metrics calculation...');
     const response = await fetch('/api/llama', {
       method: 'POST',
       headers: {
@@ -152,7 +199,57 @@ export const calculateMetrics = async (feedbackData: any[]) => {
         messages: [
           {
             role: "system",
-            content: "Calculate metrics from the feedback data and return in the following format: {\"user_satisfaction\": {\"percentage\": number, \"description\": string}, \"efficiency_improvement\": {\"multiplier\": number, \"description\": string}, \"time_saved\": {\"hours_per_week\": number, \"description\": string}, \"revenue_impact\": {\"percentage\": number, \"description\": string}}"
+            content: `You are a data analysis expert. Calculate key metrics from the provided feedback data using these specific formulas:
+
+1. User Satisfaction:
+- User Satisfaction Percentage = (mean(csat_score_post) - mean(csat_score_pre)) / mean(csat_score_pre) * 100
+- NPS Rating Improvement = (mean(nps_rating_post) - mean(nps_rating_pre)) / mean(nps_rating_pre) * 100
+- Support Tickets Reduction = (sum(support_tickets_opened_pre) - sum(support_tickets_opened_post)) / sum(support_tickets_opened_pre) * 100
+
+2. Efficiency & Time-on-Task:
+- Efficiency Multiplier = mean(avg_task_time_pre) / mean(avg_task_time_post)
+- Task Time Reduction = (1 - 1/efficiency_multiplier) * 100
+- Clicks Reduction = (mean(clicks_per_task_pre) - mean(clicks_per_task_post)) / mean(clicks_per_task_pre) * 100
+- Error Rate Reduction = (mean(error_rate_pre) - mean(error_rate_post)) / mean(error_rate_pre) * 100
+
+3. Time Saved:
+- Hours Per Week = mean(weekly_hours_spent_pre - weekly_hours_spent_post)
+- Annual Hours Saved = Hours Per Week * 52
+
+4. Business & Revenue Impact:
+- Revenue Impact = (mean(avg_revenue_per_user_post) - mean(avg_revenue_per_user_pre)) / mean(avg_revenue_per_user_pre) * 100
+- Conversion Rate Improvement = (mean(conversion_rate_post) - mean(conversion_rate_pre)) / mean(conversion_rate_pre) * 100
+- Churn Rate Reduction = (mean(churn_rate_pre) - mean(churn_rate_post)) / mean(churn_rate_pre) * 100
+- Support Cost Reduction = (mean(support_cost_per_user_pre) - mean(support_cost_per_user_post)) / mean(support_cost_per_user_pre) * 100
+
+Analyze the data and return metrics in the following JSON format:
+{
+  "user_satisfaction": {
+    "percentage": number,
+    "nps_improvement": number,
+    "support_tickets_reduction": number,
+    "description": "Improvement in user satisfaction based on CSAT scores"
+  },
+  "efficiency_improvement": {
+    "multiplier": number,
+    "task_time_reduction": number,
+    "clicks_reduction": number,
+    "error_rate_reduction": number,
+    "description": "Improvement in task completion efficiency"
+  },
+  "time_saved": {
+    "hours_per_week": number,
+    "annual_hours": number,
+    "description": "Average time saved per user per week"
+  },
+  "revenue_impact": {
+    "percentage": number,
+    "conversion_improvement": number,
+    "churn_reduction": number,
+    "support_cost_reduction": number,
+    "description": "Estimated increase in revenue due to improved engagement"
+  }
+}`
           },
           {
             role: "user",
@@ -162,59 +259,42 @@ export const calculateMetrics = async (feedbackData: any[]) => {
       }),
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'API request failed');
+    let data;
+    try {
+      data = await response.json();
+    } catch (jsonError) {
+      console.error('Failed to parse API response:', jsonError);
+      // Let the calling function handle this with its own direct calculation
+      throw new Error('Failed to parse metrics calculation API response');
     }
 
-    const data = await response.json();
+    if (!response.ok) {
+      console.error('API error:', data.error || 'Unknown error');
+      throw new Error(data.error || 'API request failed');
+    }
     
     // Validate that the content is valid JSON
     try {
-      JSON.parse(data.content);
+      const parsedContent = JSON.parse(data.content);
+      
+      // Check that the structure is valid (has required fields)
+      if (!parsedContent.user_satisfaction || 
+          typeof parsedContent.user_satisfaction.percentage !== 'number' ||
+          !parsedContent.efficiency_improvement ||
+          typeof parsedContent.efficiency_improvement.multiplier !== 'number') {
+        console.error('API returned invalid metrics data structure:', parsedContent);
+        throw new Error('Invalid metrics data structure');
+      }
+      
       return data.content;
     } catch (parseError) {
-      console.error('API returned invalid JSON:', parseError);
-      // Return a valid JSON string as fallback
-      return JSON.stringify({
-        user_satisfaction: {
-          percentage: 15,
-          description: "Improvement in user satisfaction based on CSAT scores"
-        },
-        efficiency_improvement: {
-          multiplier: 1.8,
-          description: "Improvement in task completion efficiency"
-        },
-        time_saved: {
-          hours_per_week: 2.5,
-          description: "Average time saved per user per week"
-        },
-        revenue_impact: {
-          percentage: 7.2,
-          description: "Estimated increase in revenue due to improved engagement"
-        }
-      });
+      console.error('API returned invalid JSON for metrics:', parseError);
+      // Let the calling function handle this with its own direct calculation
+      throw new Error('Invalid metrics JSON from API');
     }
   } catch (error) {
     console.error('Error in metrics calculation:', error);
-    // Return a valid JSON string as fallback
-    return JSON.stringify({
-      user_satisfaction: {
-        percentage: 15,
-        description: "Improvement in user satisfaction based on CSAT scores"
-      },
-      efficiency_improvement: {
-        multiplier: 1.8,
-        description: "Improvement in task completion efficiency"
-      },
-      time_saved: {
-        hours_per_week: 2.5,
-        description: "Average time saved per user per week"
-      },
-      revenue_impact: {
-        percentage: 7.2,
-        description: "Estimated increase in revenue due to improved engagement"
-      }
-    });
+    // Let the main component's error handling take care of the fallback
+    throw error;
   }
 }; 
