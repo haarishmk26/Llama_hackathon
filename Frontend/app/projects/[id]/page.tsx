@@ -1,22 +1,29 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import Link from "next/link"
-import { ArrowLeft, Download, Share2 } from "lucide-react"
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { ArrowLeft, Download, Share2 } from "lucide-react";
 
-import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import ImageDiffViewer from "@/components/image-diff-viewer"
-import FeedbackList from "@/components/feedback-list"
-import InsightSection from "@/components/insight-section"
-import { Skeleton } from "@/components/ui/skeleton"
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import ImageDiffViewer from "@/components/image-diff-viewer";
+import FeedbackList from "@/components/feedback-list";
+import InsightSection from "@/components/insight-section";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Mock project data - in a real app, this would be fetched from an API
 const mockProject = {
   id: "project-1",
   title: "Mobile App Onboarding Flow",
-  description: "Analysis of changes between previous NPM package and new UI design",
+  description:
+    "Analysis of changes between previous NPM package and new UI design",
   createdAt: "2023-05-01",
   summary: `The onboarding flow underwent significant simplification between the previous version and the new design, reducing the number of steps from 5 to 3 while maintaining all critical functionality. Key changes include combining account creation and preference selection into a single screen, eliminating redundant permission requests, introducing more visual cues and progress indicators, and simplifying language with approximately 40% less text.`,
   uiChanges: [
@@ -113,24 +120,27 @@ const mockProject = {
       "Excessive text and reading",
       "Too many required fields",
     ],
-    outstandingIssues: ["Limited customization options", "No way to return to previous steps"],
+    outstandingIssues: [
+      "Limited customization options",
+      "No way to return to previous steps",
+    ],
   },
-}
+};
 
 export default function ProjectPage() {
-  const [project, setProject] = useState<typeof mockProject | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [project, setProject] = useState<typeof mockProject | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Simulate API fetch
     const fetchProject = async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      setProject(mockProject)
-      setLoading(false)
-    }
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      setProject(mockProject);
+      setLoading(false);
+    };
 
-    fetchProject()
-  }, [])
+    fetchProject();
+  }, []);
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -145,16 +155,12 @@ export default function ProjectPage() {
               <Download className="mr-2 h-4 w-4" />
               Export
             </Button>
-            <Button variant="outline" size="sm">
-              <Share2 className="mr-2 h-4 w-4" />
-              Share
-            </Button>
           </div>
         </div>
       </header>
 
       <main className="flex-1">
-        <div className="container py-8">
+        <div className="mx-auto max-w-3xl py-8">
           {loading ? (
             <div className="space-y-4">
               <Skeleton className="h-8 w-1/3" />
@@ -164,7 +170,9 @@ export default function ProjectPage() {
           ) : project ? (
             <>
               <div className="mb-8">
-                <h1 className="text-3xl font-bold tracking-tight">{project.title}</h1>
+                <h1 className="text-3xl font-bold tracking-tight">
+                  {project.title}
+                </h1>
                 <p className="text-muted-foreground">{project.description}</p>
               </div>
 
@@ -179,13 +187,19 @@ export default function ProjectPage() {
                   <Card>
                     <CardHeader>
                       <CardTitle>Key Changes Addressed</CardTitle>
-                      <CardDescription>Major improvements based on feedback</CardDescription>
+                      <CardDescription>
+                        Major improvements based on feedback
+                      </CardDescription>
                     </CardHeader>
                     <CardContent>
                       <InsightSection
                         summary={project.summary}
-                        addressedIssues={project.feedbackInsights.addressedIssues}
-                        outstandingIssues={project.feedbackInsights.outstandingIssues}
+                        addressedIssues={
+                          project.feedbackInsights.addressedIssues
+                        }
+                        outstandingIssues={
+                          project.feedbackInsights.outstandingIssues
+                        }
                       />
                     </CardContent>
                   </Card>
@@ -195,7 +209,9 @@ export default function ProjectPage() {
                   <Card>
                     <CardHeader>
                       <CardTitle>Visual Comparison</CardTitle>
-                      <CardDescription>Side-by-side view of interface changes</CardDescription>
+                      <CardDescription>
+                        Side-by-side view of interface changes
+                      </CardDescription>
                     </CardHeader>
                     <CardContent>
                       <ImageDiffViewer screens={project.uiChanges} />
@@ -207,12 +223,16 @@ export default function ProjectPage() {
                   <Card>
                     <CardHeader>
                       <CardTitle>User Feedback Analysis</CardTitle>
-                      <CardDescription>Sentiment and thematic analysis of previous version</CardDescription>
+                      <CardDescription>
+                        Sentiment and thematic analysis of previous version
+                      </CardDescription>
                     </CardHeader>
                     <CardContent>
                       <FeedbackList
                         feedbackSummary={project.feedbackInsights.summary}
-                        sentimentDistribution={project.feedbackInsights.sentimentDistribution}
+                        sentimentDistribution={
+                          project.feedbackInsights.sentimentDistribution
+                        }
                         feedback={project.feedbackInsights.feedback}
                       />
                     </CardContent>
@@ -228,5 +248,5 @@ export default function ProjectPage() {
         </div>
       </main>
     </div>
-  )
+  );
 }

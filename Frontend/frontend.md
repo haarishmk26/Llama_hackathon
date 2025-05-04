@@ -23,7 +23,9 @@ cd artifact
 
 \`\`\`bash
 npm install
+
 # or
+
 yarn install
 \`\`\`
 
@@ -44,25 +46,27 @@ This project uses the following main dependencies:
 
 \`\`\`bash
 npm run dev
+
 # or
+
 yarn dev
 \`\`\`
 
-2. Open your browser and navigate to [http://localhost:3000](http://localhost:3000)
+2. Open your browser and navigate to [http://localhost:3000]()
 
 ## Project Structure
 
 \`\`\`
 artifact/
-├── app/                  # Next.js App Router pages
-│   ├── page.tsx          # Home page
-│   ├── projects/         # Project-related pages
-│   └── api/              # API routes
-├── components/           # React components
-├── lib/                  # Utility functions
-├── public/               # Static assets
-│   └── images/           # Image assets
-└── types/                # TypeScript type definitions
+├── app/ # Next.js App Router pages
+│ ├── page.tsx # Home page
+│ ├── projects/ # Project-related pages
+│ └── api/ # API routes
+├── components/ # React components
+├── lib/ # Utility functions
+├── public/ # Static assets
+│ └── images/ # Image assets
+└── types/ # TypeScript type definitions
 \`\`\`
 
 ## Development Workflow
@@ -77,15 +81,19 @@ To build the application for production:
 
 \`\`\`bash
 npm run build
+
 # or
+
 yarn build
 \`\`\`
 
-To start the production server:
+To start the producthttp://localhost:3000ion server:
 
 \`\`\`bash
 npm start
+
 # or
+
 yarn start
 \`\`\`
 
@@ -94,13 +102,16 @@ yarn start
 Create a `.env.local` file in the root directory with the following variables (if needed):
 
 \`\`\`
+
 # Example environment variables
+
 NEXT_PUBLIC_API_URL=http://localhost:3000/api
 \`\`\`
 
 ## Troubleshooting
 
 - **Issue**: Dependencies not installing correctly
+
   - **Solution**: Try deleting `node_modules` and `package-lock.json`, then run `npm install` again
 
 - **Issue**: Build errors related to TypeScript

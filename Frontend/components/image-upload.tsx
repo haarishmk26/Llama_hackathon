@@ -1,52 +1,57 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useRef } from "react"
-import { Upload, X, ImageIcon } from "lucide-react"
-import Image from "next/image"
+import { useState, useRef } from "react";
+import { Upload, X, ImageIcon } from "lucide-react";
+import Image from "next/image";
 
 type ImageUploadProps = {
-  label: string
-  description: string
-  files: File[]
-  setFiles: (files: File[]) => void
-}
+  label: string;
+  description: string;
+  files: File[];
+  setFiles: (files: File[]) => void;
+};
 
-export default function ImageUpload({ label, description, files, setFiles }: ImageUploadProps) {
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const [previews, setPreviews] = useState<string[]>([])
+export default function ImageUpload({
+  label,
+  description,
+  files,
+  setFiles,
+}: ImageUploadProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [previews, setPreviews] = useState<string[]>([]);
 
   const handleFileSelection = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFiles = Array.from(e.target.files || [])
-    if (selectedFiles.length === 0) return
+    const selectedFiles = Array.from(e.target.files || []);
+    if (selectedFiles.length === 0) return;
 
     // Create preview URLs
-    const newPreviews = selectedFiles.map((file) => URL.createObjectURL(file))
-    setPreviews((prev) => [...prev, ...newPreviews])
+    const newPreviews = selectedFiles.map((file) => URL.createObjectURL(file));
+    setPreviews((prev) => [...prev, ...newPreviews]);
 
     // Update files state
-    setFiles([...files, ...selectedFiles])
+    setFiles([...files, ...selectedFiles]);
 
     // Reset input
     if (fileInputRef.current) {
-      fileInputRef.current.value = ""
+      fileInputRef.current.value = "";
     }
-  }
+  };
 
   const removeFile = (index: number) => {
     // Revoke object URL to avoid memory leaks
-    URL.revokeObjectURL(previews[index])
+    URL.revokeObjectURL(previews[index]);
 
     // Remove file and preview
-    const newFiles = [...files]
-    newFiles.splice(index, 1)
-    setFiles(newFiles)
+    const newFiles = [...files];
+    newFiles.splice(index, 1);
+    setFiles(newFiles);
 
-    const newPreviews = [...previews]
-    newPreviews.splice(index, 1)
-    setPreviews(newPreviews)
-  }
+    const newPreviews = [...previews];
+    newPreviews.splice(index, 1);
+    setPreviews(newPreviews);
+  };
 
   return (
     <div className="space-y-4">
@@ -81,7 +86,7 @@ export default function ImageUpload({ label, description, files, setFiles }: Ima
               </div>
               <button
                 onClick={() => removeFile(index)}
-                className="absolute -right-2 -top-2 rounded-full bg-background p-1 shadow-md hover:bg-muted"
+                className="absolute -left-2 -top-2 rounded-full bg-background p-1 shadow-md hover:bg-muted"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -100,5 +105,5 @@ export default function ImageUpload({ label, description, files, setFiles }: Ima
         </div>
       )}
     </div>
-  )
+  );
 }
