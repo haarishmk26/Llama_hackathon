@@ -2,6 +2,10 @@
 
 A project for analyzing UI changes and user feedback using the Llama API.
 
+#Demo
+[![Watch the video](https://img.youtube.com/vi/JBJghpx4xJk/0.jpg)](https://www.youtube.com/watch?v=JBJghpx4xJk)
+
+
 ---
 
 ## Project Structure
