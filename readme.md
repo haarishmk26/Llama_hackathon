@@ -81,7 +81,7 @@ LLAMA_HACKATHON/
    ```
    FLASK_APP=app.py
    FLASK_ENV=development
-   LLAMA_API_KEY=LLM|1671322013583157|rLNuBsns7aO149BRL62uO5OLcIk
+   LLAMA_API_KEY=API_key
    LLAMA_API_ENDPOINT=https://api.llama.example.com/v1/analyze
    ```
 
